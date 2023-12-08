@@ -1,0 +1,20 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="google-site-verification" content="v-s4wgM71XBg2hYcRf4gslb9_WmYUy4EFh-CRIIOJKU"/>
+
+    <meta property="og:title" content="розв'язувач формул"/>
+    <meta property="og:description" content="сайт створений для систематизації знань за 10 клас"/>
+    <meta property="og:image" content="{% static 'images/ms.jpg' %}"/>
+
+    <title>{% block title %}мій сайт{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}"/>
+
+</head>
+<body>
+{% block content %}{% endblock %}
+</body>
+</html>

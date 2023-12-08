@@ -1,0 +1,219 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Page Title</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link rel='stylesheet' type='text/css' media='screen' href="{% static 'css/mkChat/main.css' %}">
+</head>
+<body>
+
+    hi, {{ user.username }}
+    <br>
+
+    {% for chat in chats%}
+
+        <div class="chatBox">
+
+            <button id="{{chat.name}}!" onclick="openChat('{{chat.name}}')" >
+                {{chat.name}}
+            </button>
+        </div>
+
+         <div class="chat"  id="{{chat.name}}">
+
+            <table class="temp">
+                    {% for mess in chat.messages %}
+                    <tr><td><button  class="{%if mess.author == user.username %}rightMess{% else %}leftMess{%endif%}">{{mess.text}}</button></td></tr>
+                    {% endfor %}
+            </table>
+
+            <script>
+
+                const chatSocket{{chat.name}} = new WebSocket('ws://'+ window.location.host+ "/ws/mkchat/userPanel/{{chat.id}}/");
+                chatSocket{{chat.name}}.onmessage = function(e) {
+                    const data = JSON.parse(e.data);
+                    addMess(data.message,"leftMess")
+                };
+
+                chatSocket{{chat.name}}.onclose = function(e) {
+                    console.error('Chat socket closed unexpectedly');
+                };
+            </script>
+
+
+            <form class="sendMess row" method="POST" action="{% url 'mkchat:sendMess'%}" id="mes{{chat.name}}" class="sendMess row">
+                <!--{% csrf_token %}-->
+                <input hidden name="author" value="{{user.name}}">
+                <input hidden name="chat" value="{{chat.id}}" class="chatInput">
+                   <input type="text" name="text" class="col-xs-9 col-sm-10 col-md-10 col-lg-10" id="text{{chat.name}}" value=""> <!--onblur="document.cookie = `lastText= ${input.value}`"-->
+
+                <button type="submit" class="col-xs-2 col-sm-2 col-md-1 col-lg-1" onclick="sendForm('mes{{chat.name}}')" >
+                    send
+                </button>
+            </form>
+        </div>
+    {% endfor %}
+
+    <button id="addChat">add user</button>
+
+<script>
+    var lastMess = null;
+    function addMess(text,clas){
+        if(clas=="rightMess"){
+            lastMess=text
+
+            lastOpenedChatOb.find(".temp").append(`<tr><td><button  class="rightMess">${text}</button></td></tr>`);
+            lastOpenedChatOb2.scrollTop = lastOpenedChatOb2.scrollHeight;
+            input.value =''
+        }else{
+
+            if(clas=="leftMess" && lastMess==null){
+                lastOpenedChatOb.find(".temp").append(`<tr><td><button  class="leftMess">${text}</button></td></tr>`);
+                lastOpenedChatOb2.scrollTop = lastOpenedChatOb2.scrollHeight;
+                input.value =''
+            }else{
+                lastMess=null
+            }
+        }
+
+
+
+    }
+
+    var token = '{{csrf_token}}'
+
+    function sendForm(id){
+        $(`#${id}`).on('submit', (e) => {e.preventDefault();});
+
+        if(document.getElementById(`text${lastOpenedChat}`).value!=='' ){
+            document.cookie ='lastText= ';
+            document.cookie ='scroll= ';
+            let chatVal= $(`#${id}`).find(".chatInput").val();
+            let textVal=document.getElementById(`text${lastOpenedChat}`).value
+            eval(`chatSocket${lastOpenedChat}.send(JSON.stringify({'message': textVal}));`)
+
+
+            $.ajax({
+                headers: { "X-CSRFToken": token },
+                url: "{% url 'mkchat:sendMess'%}",
+                type: 'POST',
+                data : {author:"{{user.name}}", chat:chatVal, text:textVal},
+                dataType: "text",
+                success: addMess(textVal,"rightMess"),
+
+                failure: function(data) {
+                    alert('Got an error');
+                }
+            });
+        }
+
+    }
+
+
+
+    function get_cookie ( cookie_name ){
+        var results = document.cookie.match ( '(^|;) ?' + cookie_name + '=([^;]*)(;|$)' );
+
+        if ( results )
+            return ( unescape ( results[2] ) );
+        else
+            return null;
+    }
+
+    var lastOpenedChat= get_cookie("lastChat")
+    if (lastOpenedChat==null || lastOpenedChat==""){
+        lastOpenedChat='{{chats.0.name}}'
+
+        document.cookie = `lastChat= ${lastOpenedChat}`}
+
+
+    var lastOpenedChatOb= $('#'+lastOpenedChat)
+    var lastOpenedChatOb2= document.getElementById(`${lastOpenedChat}`);
+
+    if(lastOpenedChat != null || lastOpenedChat != " "){
+
+        try{
+        openChat(lastOpenedChat)
+       }catch (e){
+            console.log(e)
+            lastOpenedChat= $(".chat")[0].id
+            openChat(lastOpenedChat)
+        }
+
+    }
+
+
+
+
+    var input = document.getElementById(`text${lastOpenedChat}`)
+    input.focus()
+    input.value = get_cookie("lastText")
+
+    if(get_cookie("scroll")!== ' '){
+        document.getElementById(lastOpenedChat).scrollTop = get_cookie("scroll")
+        document.cookie = 'scroll= '
+        }
+
+    //document.cookie = "lastText="
+
+    function openChat(chatName){
+        var chat;
+        try {
+            chat = document.getElementById(chatName);
+            chat.classList.remove('chat')
+            chat.classList.add('chatM');
+        } catch (e) {
+            chatName = '{{chats.0.name}}'
+
+            chat = document.getElementById(chatName);
+            document.cookie = `lastChat= ${chatName}`
+
+            chat.classList.remove('chat')
+            chat.classList.add('chatM');
+        }
+
+
+        chat.scrollTop = chat.scrollHeight;
+        document.cookie = 'scroll= '
+        document.getElementById(chatName+"!").style.backgroundColor="red"
+
+
+        if(lastOpenedChat!=null && lastOpenedChat!==chatName ){
+            try{
+                chat = document.getElementById(lastOpenedChat)
+            }catch(e){
+                lastOpenedChat='{{chats.0.name}}'
+                chat = document.getElementById(lastOpenedChat);
+                document.cookie = `lastChat= ${lastOpenedChat}`
+
+                }
+
+            chat.classList.remove('chatM')
+            chat.classList.add('chat');
+
+
+            document.getElementById(lastOpenedChat+"!").style.backgroundColor="white"
+        }
+        document.cookie = `lastChat= ${chatName}`;
+        lastOpenedChat= chatName
+
+
+    }
+
+    function end(){
+        input = document.getElementById(`text${lastOpenedChat}`)
+        scrol = document.getElementById(lastOpenedChat).scrollTop
+
+        document.cookie = (`lastText=${input.value}`) ;
+        document.cookie = `scroll=${scrol}`
+        location.reload()
+    }
+</script>
+
+</body>

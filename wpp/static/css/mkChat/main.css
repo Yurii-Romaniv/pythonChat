@@ -1,0 +1,61 @@
+.chat{
+    width: 0px;
+    height: 0px;
+    display: none;
+
+}
+
+table,td{
+    width: 100%;
+    margin-bottom: 4vh;
+}
+
+#addChat{
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 20%;
+    border-radius: 15%;
+    background-color: chartreuse;
+}
+
+.chatM{
+    background-color: rgb(202, 230, 247);
+    height : 100%;
+    width: 80%;
+
+    overflow: scroll;
+    
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 20%;
+}
+
+
+.leftMess{
+    float: left;
+    background-color: rgb(71, 110, 155);
+}
+
+
+.rightMess{
+    float: right;
+    background-color: rgb(0, 75, 161);
+}
+
+.sendMess{
+    position: fixed;
+    bottom: 0;
+    
+    margin-left: 0%;
+    width: 80%;
+}
+
+
+.unv{
+    position: fixed;
+    bottom: 0;
+}
